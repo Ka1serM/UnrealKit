@@ -30,7 +30,7 @@ CheckOptions:
   readability-identifier-naming.ParameterCase: camelBack
   readability-identifier-naming.MemberCase: camelBack
   readability-identifier-naming.NamespaceIgnoredRegexp: '^(ue5parse|runtime|ue)$'
-  readability-identifier-naming.FunctionIgnoredRegexp: '^Kraken_Decompress$'
+  readability-identifier-naming.FunctionIgnoredRegexp: '^(Kraken_Decompress|(rmlkit|unrealkit|verylia|universalumap)_[a-z_]+)$'
   readability-identifier-naming.ClassIgnoredRegexp: '^USCS_Node$'
   readability-identifier-naming.TypeAliasIgnoredRegexp: '^(is_transparent|is_avalanching)$'
   performance-unnecessary-value-param.AllowedTypes: 'std::stop_token'
