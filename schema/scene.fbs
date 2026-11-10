@@ -1,0 +1,302 @@
+namespace scene.stream;
+
+enum Version : ushort { Current = 9 }
+
+enum Severity : ubyte { Info, Warning, Error }
+
+table Diagnostic {
+  severity: Severity;
+  code: string;
+  message: string;
+  subject: string;
+}
+
+table Property {
+  name: string (required);
+  value: string (required);
+}
+
+table Hello {
+  version: Version = Current;
+  product_version: string;
+}
+table Ready {}
+
+table Begin {
+  export_id: string (required);
+  title: string;
+}
+
+table Complete { diagnostics: [Diagnostic]; }
+
+table Progress { done: uint; total: uint; }
+
+table Finished { diagnostics: [Diagnostic]; }
+
+table Failed { diagnostic: Diagnostic (required); }
+
+table Image {
+  key: string (required);
+  name: string (required);
+  data: [ubyte] (required);
+  srgb: bool;
+}
+
+enum MaterialOp : ubyte {
+  Constant,
+  Parameter,
+  Texture,
+  Geometry, GeometryDx, GeometryDy,
+  Time, Frame,
+  Extract,
+  Combine,
+  Add, Sub, Mul, Div, Min, Max, Pow, Atan2,
+  Mod,
+  Abs, Floor, Ceil, Fract, Round, Trunc, Sign, Sqrt, Exp2, Log2, Sin, Cos, Tan, Asin, Acos, Atan,
+  Random,
+  Less, LessEqual, Equal, NotEqual,
+  Select,
+  Dot, Cross, Length, Distance, Normalize,
+  Reflect,
+  TangentToWorld,
+  Clamp,
+  Mix,
+  Smoothstep,
+  MulAdd,
+}
+
+enum MaterialGeometry : ubyte {
+  Position, Normal, Tangent, Bitangent,
+  TexCoord0, TexCoord1, TexCoord2, TexCoord3, TexCoord4, TexCoord5, TexCoord6, TexCoord7,
+  VertexColor,
+  ObjectAxisX, ObjectAxisY, ObjectAxisZ, ObjectOrigin,
+  WorldAxisX, WorldAxisY, WorldAxisZ, WorldOrigin,
+  ObjectBoundsMin, ObjectBoundsMax,
+  CameraPosition, CameraForward, CameraRight, CameraUp,
+  SceneDepth,
+  ViewDirection,
+  PrimitiveId,
+  CameraFilmScale, ViewSize,
+  CustomData0, CustomData1, CustomData2, CustomData3, CustomData4, CustomData5, CustomData6, CustomData7, CustomData8,
+  LocalPosition,
+}
+
+struct MaterialInstruction {
+  op: MaterialOp;
+  width: ubyte;
+  index: ushort;
+  a: uint;
+  b: uint;
+  c: uint;
+}
+
+table MaterialParameter {
+  name: string (required);
+  value: [float] (required);
+}
+
+enum TextureAddress : ubyte { Wrap, Clamp, Mirror }
+
+table MaterialTexture {
+  image: string (required);
+  name: string;
+  address_u: TextureAddress;
+  address_v: TextureAddress;
+  nearest: bool;
+}
+
+table MaterialProgram {
+  instructions: [MaterialInstruction] (required);
+  constants: [float];
+  parameters: [MaterialParameter];
+  textures: [MaterialTexture];
+  base_color: uint;
+  normal: uint;
+  emission: uint;
+  roughness: uint;
+  metallic: uint;
+  specular: uint;
+  opacity: int = -1;
+  displacement: int = -1;
+  refraction: int = -1;
+}
+
+table Material {
+  key: string (required);
+  name: string (required);
+  chain: [string] (required);
+  blend_mode: string;
+  two_sided: bool;
+  program: MaterialProgram (required);
+  unlit: bool;
+  sort_priority: int;
+  disable_depth_test: bool;
+  object_translucency: bool;
+}
+
+table Bone {
+  name: string (required);
+  parent: int = -1;
+  location: [float] (required);
+  rotation: [float] (required);
+  scale: [float] (required);
+}
+
+table Skeleton {
+  key: string (required);
+  name: string (required);
+  bones: [Bone] (required);
+}
+
+table Mesh {
+  key: string (required);
+  name: string (required);
+  positions: [float] (required);
+  normals: [float] (required);
+  uv_count: ubyte;
+  uvs: [float] (required);
+  colors: [ubyte] (required);
+  indices: [uint] (required);
+  triangle_materials: [ushort] (required);
+  material_slots: [string] (required);
+  skeleton: string;
+  influences: ubyte;
+  bone_indices: [ushort];
+  bone_weights: [ushort];
+  tangents: [float];
+}
+
+enum LightType : ubyte { Point, Spot, Rect, Directional, Sky }
+
+table Light {
+  key: string (required);
+  name: string (required);
+  type: LightType;
+  color: [float] (required);
+  intensity: float;
+  source_radius: float;
+  inner_cone_angle: float;
+  outer_cone_angle: float;
+  source_width: float;
+  source_height: float;
+  image: string;
+  source_cubemap_angle: float;
+  lower_hemisphere_is_black: bool;
+  lower_hemisphere_color: [float];
+  indirect_lighting_intensity: float = 1;
+  source_angle: float;
+  attenuation_radius: float;
+  inverse_squared_falloff: bool = true;
+  light_falloff_exponent: float;
+}
+
+enum Facing : ubyte {
+  None,
+  CameraPlane,
+  CameraPosition,
+  CameraAxis,
+}
+
+table InstanceParameter {
+  name: string (required);
+  components: ubyte;
+  values: [float] (required);
+}
+
+table Instances {
+  key: string (required);
+  mesh: string (required);
+  facing: Facing;
+  first_frames: [int] (required);
+  frame_counts: [uint] (required);
+  locations: [float] (required);
+  rotations: [float] (required);
+  scales: [float] (required);
+  parameters: [InstanceParameter];
+  loop_start: int;
+  loop_frames: uint;
+}
+
+table Camera {
+  key: string (required);
+  name: string (required);
+  field_of_view: float;
+  near_clip: float;
+}
+
+table Keys {
+  components: ubyte;
+  frames: [float] (required);
+  values: [float] (required);
+  loop_start: float;
+  loop_frames: float;
+}
+
+table Channel {
+  property: string (required);
+  keys: Keys (required);
+}
+
+table Track {
+  name: string (required);
+  channels: [Channel] (required);
+}
+
+table Animation {
+  key: string (required);
+  name: string (required);
+  tracks: [Track] (required);
+}
+
+table Scene {
+  frames_per_second: uint;
+  frame_start: int;
+  frame_end: int;
+}
+
+table Collection {
+  id: uint;
+  name: string (required);
+  parent: int = -1;
+  properties: [Property];
+}
+
+enum ObjectKind : ubyte { Empty, Mesh, Light, Camera, Instances }
+
+enum ViewerVisibility : ubyte {
+  Everyone,
+  OnlyViewer,
+  NotViewer
+}
+
+table Object {
+  id: uint;
+  name: string (required);
+  collection: uint;
+  parent: int = -1;
+  parent_bone: string;
+  matrix: [float] (required);
+  kind: ObjectKind;
+  data: string;
+  posed: bool;
+  materials: [string];
+  visible: bool = true;
+  properties: [Property];
+  animation: string;
+  track: string;
+  viewer: int = -1;
+  viewer_visibility: ViewerVisibility;
+  cast_shadow: bool = true;
+  sort_priority: int;
+  reverse_culling: bool;
+}
+
+union Record {
+  Hello, Ready, Begin, Complete, Progress, Finished, Failed,
+  Image, Material, Skeleton, Mesh, Light, Camera, Animation, Scene, Collection, Object, Instances
+}
+
+table Envelope { record: Record (required); }
+
+root_type Envelope;
+file_identifier "VSCN";

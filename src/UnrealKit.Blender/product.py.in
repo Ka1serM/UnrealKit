@@ -1,0 +1,7 @@
+import tomllib
+from pathlib import Path
+
+ID = "@IMPORTER_ID@"
+NAME = "@IMPORTER_NAME@"
+PORT = @IMPORTER_BLENDER_PORT@
+VERSION = tomllib.loads((Path(__file__).parent / "blender_manifest.toml").read_text(encoding="utf-8"))["version"]

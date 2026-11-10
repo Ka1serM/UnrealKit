@@ -1,0 +1,9 @@
+#pragma once
+
+#include "CoreMinimal.h"
+
+constexpr TCHAR ImporterPlugin[] = TEXT("@IMPORTER_MODULE@");
+constexpr TCHAR ImporterRoot[] = TEXT("/Game/@IMPORTER_MODULE@");
+constexpr TCHAR ImporterMasterPackage[] = TEXT("/Game/@IMPORTER_MODULE@/M_@IMPORTER_MODULE@");
+constexpr TCHAR ImporterLinearWhitePackage[] = TEXT("/Game/@IMPORTER_MODULE@/T_LinearWhite");
+constexpr int32 ImporterPort = @IMPORTER_UNREAL_PORT@;

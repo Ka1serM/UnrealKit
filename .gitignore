@@ -1,0 +1,9 @@
+/build/
+/build-*/
+/cmake-build-*/
+/.cache/
+__pycache__/
+bin/
+obj/
+/.idea
+notes.md

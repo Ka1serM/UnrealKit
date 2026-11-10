@@ -1,0 +1,21 @@
+[submodule "external/CppUE5Parse"]
+	path = external/CppUE5Parse
+	url = https://github.com/Ka1serM/CppUE5Parse.git
+[submodule "external/UsmapGen"]
+	path = external/UsmapGen
+	url = https://github.com/Ka1serM/UsmapGen.git
+[submodule "external/flatbuffers"]
+	path = external/flatbuffers
+	url = https://github.com/google/flatbuffers.git
+[submodule "external/zstd"]
+	path = external/zstd
+	url = https://github.com/facebook/zstd.git
+[submodule "external/mbedtls"]
+	path = external/mbedtls
+	url = https://github.com/Mbed-TLS/mbedtls.git
+[submodule "external/cpp-httplib"]
+	path = external/cpp-httplib
+	url = https://github.com/yhirose/cpp-httplib.git
+[submodule "external/bcdec"]
+	path = external/bcdec
+	url = https://github.com/iOrange/bcdec.git

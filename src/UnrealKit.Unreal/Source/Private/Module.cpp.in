@@ -1,0 +1,21 @@
+#include "Modules/ModuleManager.h"
+#include "SceneServer.h"
+
+DEFINE_LOG_CATEGORY(LogSceneImport);
+
+class FImporterModule final : public IModuleInterface
+{
+public:
+	void StartupModule() override
+	{
+		Server = MakeUnique<FSceneServer>();
+		Server->Start();
+	}
+
+	void ShutdownModule() override { Server.Reset(); }
+
+private:
+	TUniquePtr<FSceneServer> Server;
+};
+
+IMPLEMENT_MODULE(FImporterModule, @IMPORTER_MODULE@)

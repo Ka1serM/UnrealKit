@@ -1,0 +1,19 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "@IMPORTER_VERSION@",
+	"FriendlyName": "@IMPORTER_NAME@",
+	"Description": "Imports the scenes that the @IMPORTER_NAME@ app exports.",
+	"Category": "Importers",
+	"CreatedBy": "@IMPORTER_MAINTAINER@",
+	"EngineVersion": "5.7.0",
+	"CanContainContent": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "@IMPORTER_MODULE@",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}
