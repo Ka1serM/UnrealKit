@@ -58,11 +58,14 @@ std::expected<void, Core::Error> Provider::mount(MountOptions options, const std
             return Reading::fail("mount.mappings", options.mappings.string(), mappings.error());
         input.mappings = std::move(*mappings);
     }
-    auto key = ue5parse::parseAesKey(options.aesKey);
-    if (!key)
-        return Core::fail("mount.aes_key", "The AES key is not 64 hexadecimal digits.");
     ue5parse::KeyRing keys;
-    keys.add(ue5parse::FGuid{}, *key);
+    //! An empty key is no key: the game does not encrypt its archives, and an encrypted one fails below with MissingKey.
+    if (!options.aesKey.empty()) {
+        auto key = ue5parse::parseAesKey(options.aesKey);
+        if (!key)
+            return Core::fail("mount.aes_key", "The AES key is not 64 hexadecimal digits.");
+        keys.add(ue5parse::FGuid{}, *key);
+    }
     for (const ArchiveKey& extra : options.extraKeys) {
         const auto guid = parseGuid(extra.guid);
         if (!guid)

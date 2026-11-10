@@ -24,6 +24,7 @@ struct MountOptions {
     ue5parse::EGame game = ue5parse::EGame::GAME_UE5_LATEST;
     std::vector<std::unique_ptr<ue5parse::FileSource>> archives;
     std::filesystem::path mappings;
+    //! Empty when the game does not encrypt its archives.
     std::string aesKey;
     std::vector<ArchiveKey> extraKeys;
     std::string debugViewShader;
