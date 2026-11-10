@@ -1,6 +1,10 @@
 #include "UnrealKit/Assets/Provider.h"
 
+#include <array>
+#include <charconv>
+#include <cstdint>
 #include <format>
+#include <optional>
 
 #include "CppUE5Parse/Crypto/Decryptor.h"
 #include "UnrealKit/Assets/Reading.h"
@@ -25,6 +29,22 @@ std::expected<std::vector<std::unique_ptr<ue5parse::FileSource>>, Core::Error> o
     return archives;
 }
 
+namespace {
+
+std::optional<ue5parse::FGuid> parseGuid(const std::string_view text) {
+    if (text.size() != 32)
+        return std::nullopt;
+    std::array<std::uint32_t, 4> parts{};
+    for (std::size_t i = 0; i < parts.size(); ++i) {
+        const std::string_view part = text.substr(i * 8, 8);
+        if (std::from_chars(part.data(), part.data() + part.size(), parts[i], 16).ptr != part.data() + part.size())
+            return std::nullopt;
+    }
+    return ue5parse::FGuid{parts[0], parts[1], parts[2], parts[3]};
+}
+
+}
+
 std::expected<void, Core::Error> Provider::mount(MountOptions options, const std::stop_token stop) {
     if (options.archives.empty())
         return Core::fail("mount.no_files", "The game has no readable archives.");
@@ -32,15 +52,26 @@ std::expected<void, Core::Error> Provider::mount(MountOptions options, const std
     input.game = options.game;
     input.archives = std::move(options.archives);
 
-    auto mappings = Platform::openFileSource(options.mappings);
-    if (!mappings)
-        return Reading::fail("mount.mappings", options.mappings.string(), mappings.error());
-    input.mappings = std::move(*mappings);
+    if (!options.mappings.empty()) {
+        auto mappings = Platform::openFileSource(options.mappings);
+        if (!mappings)
+            return Reading::fail("mount.mappings", options.mappings.string(), mappings.error());
+        input.mappings = std::move(*mappings);
+    }
     auto key = ue5parse::parseAesKey(options.aesKey);
     if (!key)
         return Core::fail("mount.aes_key", "The AES key is not 64 hexadecimal digits.");
     ue5parse::KeyRing keys;
     keys.add(ue5parse::FGuid{}, *key);
+    for (const ArchiveKey& extra : options.extraKeys) {
+        const auto guid = parseGuid(extra.guid);
+        if (!guid)
+            return Core::fail("mount.aes_key", std::format("The key GUID '{}' is not 32 hexadecimal digits.", extra.guid));
+        const auto parsed = ue5parse::parseAesKey(extra.key);
+        if (!parsed)
+            return Core::fail("mount.aes_key", std::format("The AES key for '{}' is not 64 hexadecimal digits.", extra.guid));
+        keys.add(*guid, *parsed);
+    }
     input.decryptor = std::make_unique<ue5parse::AesDecryptor>(keys);
 
     auto game = ue5parse::mount(std::move(input), stop);

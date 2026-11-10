@@ -36,4 +36,4 @@ UnrealKit::Transport::SceneSession session(product, UnrealKit::Transport::Import
 - The browser: Emscripten
 - The importers: Blender 4.5+ and Unreal Engine 5
 
-Git submodules in `external/`: CppUE5Parse, UsmapGen, FlatBuffers, zstd, Mbed TLS, cpp-httplib, and bcdec.
+Git submodules in `external/`: CppUE5Parse, UsmapGen, FlatBuffers, nlohmann/json, zstd, Mbed TLS, cpp-httplib, and bcdec.

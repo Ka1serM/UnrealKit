@@ -15,11 +15,17 @@
 
 namespace UnrealKit::Assets {
 
+struct ArchiveKey {
+    std::string guid;
+    std::string key;
+};
+
 struct MountOptions {
     ue5parse::EGame game = ue5parse::EGame::GAME_UE5_LATEST;
     std::vector<std::unique_ptr<ue5parse::FileSource>> archives;
     std::filesystem::path mappings;
     std::string aesKey;
+    std::vector<ArchiveKey> extraKeys;
     std::string debugViewShader;
 };
 

@@ -10,7 +10,7 @@ function(add_external_subdirectory source)
     set_directory_properties(PROPERTIES COMPILE_OPTIONS "${options}")
 endfunction()
 
-foreach(submodule bcdec cpp-httplib CppUE5Parse flatbuffers mbedtls UsmapGen zstd)
+foreach(submodule bcdec cpp-httplib CppUE5Parse flatbuffers json mbedtls UsmapGen zstd)
     if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${submodule}/.git")
         message(FATAL_ERROR "external/${submodule} is missing. Run: git submodule update --init --recursive")
     endif()
@@ -53,6 +53,12 @@ add_external_subdirectory(CppUE5Parse)
 
 # UsmapGen generates the mappings from the game executable.
 add_external_subdirectory(UsmapGen)
+
+# nlohmann/json reads and writes the apps' settings.json. Headers only. The code that includes it compiles without
+# exceptions, so it parses without them and checks each value before it reads it.
+set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
+add_external_subdirectory(json)
+target_compile_definitions(nlohmann_json INTERFACE JSON_NOEXCEPTION)
 
 # bcdec decodes the BC blocks of the game textures. Headers only.
 add_library(bcdec INTERFACE)

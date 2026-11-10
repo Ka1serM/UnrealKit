@@ -19,3 +19,6 @@
 [submodule "external/bcdec"]
 	path = external/bcdec
 	url = https://github.com/iOrange/bcdec.git
+[submodule "external/json"]
+	path = external/json
+	url = https://github.com/nlohmann/json.git
