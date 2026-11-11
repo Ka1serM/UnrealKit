@@ -202,6 +202,17 @@ std::expected<void, Core::Error> ConfigFields::read(const char* key, Transport::
     return {};
 }
 
+std::expected<void, Core::Error> ConfigFields::read(const char* key, ue5parse::EGame& value) const {
+    const nlohmann::json* found = find(key);
+    if (!found)
+        return {};
+    const std::optional<ue5parse::EGame> game = found->is_string() ? ue5parse::gameOfName(found->get_ref<const std::string&>()) : std::nullopt;
+    if (!game)
+        return invalid(key, "a game preset such as \"GAME_UE5_4\"");
+    value = *game;
+    return {};
+}
+
 std::expected<void, Core::Error> ConfigFields::read(const char* key, Scene::KeyReduction& value) const {
     const nlohmann::json* found = find(key);
     if (!found)

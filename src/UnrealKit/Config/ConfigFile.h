@@ -12,6 +12,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include "CppUE5Parse/Core/Versions.h"
 #include "UnrealKit/Core/Error.h"
 #include "UnrealKit/Scene/KeyReduction.h"
 #include "UnrealKit/Transport/Importer.h"
@@ -56,6 +57,7 @@ public:
     std::expected<void, Core::Error> read(const char* key, std::set<std::string>& value) const;
     std::expected<void, Core::Error> read(const char* key, Transport::Importer& value) const;
     std::expected<void, Core::Error> read(const char* key, Scene::KeyReduction& value) const;
+    std::expected<void, Core::Error> read(const char* key, ue5parse::EGame& value) const;
 
     static std::expected<void, Core::Error> firstError(std::initializer_list<std::expected<void, Core::Error>> results);
 
