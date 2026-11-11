@@ -7,7 +7,7 @@ import tokenize
 from dataclasses import dataclass
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(subprocess.run(["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True, text=True).stdout.strip())
 EXCLUDED = ("external/",)
 C_LIKE = {".h", ".hpp", ".cpp", ".inc", ".cs", ".fbs", ".js"}
 CSS = {".rcss", ".css"}

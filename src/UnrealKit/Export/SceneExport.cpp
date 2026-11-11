@@ -167,7 +167,7 @@ std::expected<void, Core::Error> SceneSender::open(const std::string_view export
     if (auto begun = sink.send(Scene::begin(exportId, title)); !begun)
         return begun;
     meter.addRecords(1);
-    return sendRecord(Scene::collection({.id = 0, .name = std::string(title), .parent = -1, .properties = {{"verylia.export_id", std::string(exportId)}}}));
+    return sendRecord(Scene::collection({.id = 0, .name = std::string(title), .parent = -1, .properties = {{"unrealkit.export_id", std::string(exportId)}}}));
 }
 
 std::expected<std::uint32_t, Core::Error> SceneSender::collection(const std::string& name, const std::uint32_t parent) {
@@ -542,11 +542,11 @@ std::expected<void, Core::Error> SceneSender::send(const ExportBatch& batch) {
             object.kind = Scene::ObjectKind::Instances;
             object.data = part.instances->key;
             if (!empty)
-                object.properties.push_back({"verylia.objectPath", part.meshPath});
+                object.properties.push_back({"unrealkit.objectPath", part.meshPath});
         } else if (!empty) {
             object.kind = Scene::ObjectKind::Mesh;
             object.data = part.meshKey.empty() ? part.meshPath : part.meshKey;
-            object.properties.push_back({"verylia.objectPath", part.meshPath});
+            object.properties.push_back({"unrealkit.objectPath", part.meshPath});
         }
         for (const std::string& material : slotMaterials[i])
             object.materials.push_back(sentMaterials.contains(material) ? material : "");

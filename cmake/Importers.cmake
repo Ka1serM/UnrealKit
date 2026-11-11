@@ -2,7 +2,7 @@ include_guard(GLOBAL)
 
 find_package(Python3 3.11 REQUIRED COMPONENTS Interpreter)
 
-#! Stages the Blender extension of the app in OUTPUT and sets BLENDER_EXTENSION_DIR and BLENDER_EXTENSION_FILES in the caller.
+#! Stages the Blender extension of the app in OUTPUT and sets BLENDER_EXTENSION_DIR, BLENDER_EXTENSION_FILES and BLENDER_TEST_COMMAND in the caller.
 function(unrealkit_add_blender_extension)
     cmake_parse_arguments(PARSE_ARGV 0 IMPORTER "" "ID;NAME;VERSION;MAINTAINER;BLENDER_PORT;OUTPUT" "")
     set(unrealkit "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/..")
@@ -33,6 +33,20 @@ function(unrealkit_add_blender_extension)
     add_custom_target(blender_extension ALL DEPENDS ${staged})
     set(BLENDER_EXTENSION_DIR "${output}" PARENT_SCOPE)
     set(BLENDER_EXTENSION_FILES "${output}/blender_manifest.toml" "${output}/product.py" ${staged} PARENT_SCOPE)
+    set(BLENDER_TEST_COMMAND "${Python3_EXECUTABLE}" -I "${unrealkit}/tools/e2e/blender_test.py" --extension "${output}" --extension-id
+        "${IMPORTER_ID}" PARENT_SCOPE)
+endfunction()
+
+#! Packs the Blender extension that unrealkit_add_blender_extension staged into an extension repository in OUTPUT.
+function(unrealkit_add_blender_repository)
+    cmake_parse_arguments(PARSE_ARGV 0 REPOSITORY "" "OUTPUT" "")
+    set(pack "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../tools/pack_blender_repository.py")
+    add_custom_command(OUTPUT "${REPOSITORY_OUTPUT}/index.json"
+        COMMAND Python3::Interpreter -I "${pack}" "${BLENDER_EXTENSION_DIR}" "${REPOSITORY_OUTPUT}"
+        DEPENDS blender_extension "${pack}"
+        COMMENT "Packing the Blender extension repository"
+        VERBATIM)
+    add_custom_target(blender_repository ALL DEPENDS "${REPOSITORY_OUTPUT}/index.json")
 endfunction()
 
 #! Stages the Unreal Editor plugin of the app and sets UNREAL_PLUGIN_STAGE and UNREAL_PLUGIN_FILES in the caller.

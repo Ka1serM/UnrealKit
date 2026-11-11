@@ -28,6 +28,28 @@ auto mounted = provider.mount({.game = ue5parse::EGame::GAME_UE5_4, .archives = 
 UnrealKit::Transport::SceneSession session(product, UnrealKit::Transport::Importer::Blender, stop, onVersionMismatch);
 ```
 
+### Mappings
+
+`Assets/Mappings.h` generates the Zstandard-compressed `.usmap` of a game executable with UsmapGen, and
+`cachedMappings(file, generate)` keeps it in a file until the file name changes.
+
+### Config
+
+`Config::ConfigFile` reads and writes a JSON settings file: it replaces the file through a temporary file, and in the
+browser it also keeps a copy in IndexedDB. `ConfigFile::directory()` and `ConfigFile::cacheDirectory()` give the
+folders of the app, named after the top-level CMake project. `Config::ConfigFields` reads the keys of a JSON object and
+fails with the file and the key when a value has the wrong type.
+
+### Tests and the browser
+
+`unrealkit_add_blender_extension` also sets `BLENDER_TEST_COMMAND`: `tools/e2e/blender_test.py` with the staged
+extension. It starts Blender in the background, runs a driver command after `--`, and checks the scene that arrived.
+`unrealkit_add_blender_repository(OUTPUT <folder>)` packs the extension into a Blender extension repository.
+
+In the browser, `web/pre.js` mounts the folders that the user picks and restores them at the next start. The app's
+own `--pre-js` calls `Module.unrealkitStart(status)` before `Module.callMain()`, and `Module.unrealkitChoose(kind,
+extension)` to pick a folder or a file.
+
 ## Dependencies
 
 - CMake 3.29+ and Ninja

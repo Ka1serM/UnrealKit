@@ -20,7 +20,7 @@ def main():
     files = {path.relative_to(python).as_posix(): path.read_bytes()
              for path in sorted((python / "flatbuffers").glob("*.py"))}
     files[f"{dist_info}/METADATA"] = f"Metadata-Version: 2.1\nName: flatbuffers\nVersion: {version}\n".encode()
-    files[f"{dist_info}/WHEEL"] = b"Wheel-Version: 1.0\nGenerator: verylia\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
+    files[f"{dist_info}/WHEEL"] = b"Wheel-Version: 1.0\nGenerator: unrealkit\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
     record = [record_line(path, data) for path, data in files.items()] + [f"{dist_info}/RECORD,,"]
     files[f"{dist_info}/RECORD"] = ("\n".join(record) + "\n").encode()
     wheel.parent.mkdir(parents=True, exist_ok=True)

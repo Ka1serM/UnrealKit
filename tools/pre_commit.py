@@ -8,7 +8,8 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+#! An app runs the kit's copy from its own repository, so the root is the repository of the working folder.
+ROOT = Path(subprocess.run(["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True, text=True).stdout.strip())
 CPP_EXTENSIONS = ("h", "hpp", "cpp", "inc")
 PLATFORM_SUFFIXES = ("", "Desktop", "Web")
 BUILD_DIRECTORY = ROOT / f"build-{platform.system().lower()}-relwithdebinfo"
@@ -43,7 +44,7 @@ def format_staged(files: list[str]) -> bool:
 
 
 def check_comments(files: list[str]) -> bool:
-    return subprocess.run([sys.executable, str(ROOT / "tools" / "check_comments.py"), *files], cwd=ROOT).returncode == 0
+    return subprocess.run([sys.executable, str(Path(__file__).with_name("check_comments.py")), *files], cwd=ROOT).returncode == 0
 
 
 def compile_database(build_directory: Path) -> dict[Path, dict] | None:
@@ -80,7 +81,7 @@ def web_entry_arguments(entry: dict) -> list[str]:
             index += 4
         elif argument == "-Xclang" and index + 1 < len(arguments) and arguments[index + 1] == "-fno-pch-timestamp":
             index += 2
-        elif argument.startswith("-s") or argument == "-msimd128":
+        elif argument.startswith("-s") and argument[2:3].isupper() or argument == "-msimd128":
             index += 1
         else:
             parsed.append(argument)
