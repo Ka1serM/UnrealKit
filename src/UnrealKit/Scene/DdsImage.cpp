@@ -12,9 +12,10 @@ namespace {
 constexpr std::size_t headerSize = 128;
 constexpr std::size_t dx10HeaderSize = 20;
 
-constexpr std::uint32_t capsFlag = 0x1, heightFlag = 0x2, widthFlag = 0x4, pitchFlag = 0x8, pixelFormatFlag = 0x1000, linearSizeFlag = 0x80000;
+constexpr std::uint32_t capsFlag = 0x1, heightFlag = 0x2, widthFlag = 0x4, pitchFlag = 0x8, pixelFormatFlag = 0x1000, mipMapCountFlag = 0x20000,
+                        linearSizeFlag = 0x80000;
 constexpr std::uint32_t alphaPixels = 0x1, fourCc = 0x4, rgb = 0x40, luminance = 0x20000;
-constexpr std::uint32_t textureCaps = 0x1000;
+constexpr std::uint32_t complexCaps = 0x8, textureCaps = 0x1000, mipMapCaps = 0x400000;
 constexpr std::uint32_t dxgiBc1 = 71, dxgiBc1Srgb = 72, dxgiBc3 = 77, dxgiBc3Srgb = 78, dxgiBc4 = 80, dxgiBc5 = 83, dxgiBc6hUf16 = 95, dxgiBc7 = 98,
                         dxgiBc7Srgb = 99;
 constexpr std::uint32_t textureDimension2d = 3;
@@ -51,6 +52,10 @@ std::optional<Scene::PixelFormat> formatOfDxgi(const std::uint32_t dxgi) {
     }
 }
 
+std::size_t dxgiBlockBytes(const Scene::PixelFormat format) {
+    return format == Scene::PixelFormat::BC1 || format == Scene::PixelFormat::BC4 ? 8 : 16;
+}
+
 std::uint32_t dxgiFormat(const Scene::PixelFormat format, const bool srgb) {
     switch (format) {
     case Scene::PixelFormat::BC1:
@@ -77,12 +82,13 @@ std::uint32_t dxgiFormat(const Scene::PixelFormat format, const bool srgb) {
 
 }
 
-DdsImage::DdsImage(const Scene::TextureMip& mip, const std::string_view gamePath, std::stop_token stop)
-    : format(mip.format), srgb(mip.srgb), width(mip.width), height(mip.height), payloadSize(mip.getSize()), mip(&mip), gamePath(gamePath),
-      stop(std::move(stop)) {}
+DdsImage::DdsImage(const Scene::TextureMips& mips, const std::string_view gamePath, std::stop_token stop)
+    : format(mips.format), srgb(mips.srgb), width(mips.width), height(mips.height), levels(static_cast<int>(mips.levels.size())), payloadSize(mips.size),
+      mips(&mips), gamePath(gamePath), stop(std::move(stop)) {}
 
 DdsImage::DdsImage(const Scene::Texture& texture)
-    : format(texture.format), srgb(texture.srgb), width(texture.width), height(texture.height), payloadSize(texture.data.size()), texture(&texture) {}
+    : format(texture.format), srgb(texture.srgb), width(texture.width), height(texture.height), levels(texture.levels), payloadSize(texture.data.size()),
+      texture(&texture) {}
 
 std::size_t DdsImage::getSize() const {
     return headerSize + (dxgiFormat(format, false) ? dx10HeaderSize : 0) + payloadSize;
@@ -94,14 +100,16 @@ std::expected<void, Core::Error> DdsImage::write(std::span<std::uint8_t> file) c
     std::fill(file.begin(), file.begin() + dataOffset, std::uint8_t{0});
     std::memcpy(file.data(), "DDS ", 4);
     put(file, 4, 124);
-    put(file, 8, capsFlag | heightFlag | widthFlag | pixelFormatFlag | (dxgi ? linearSizeFlag : pitchFlag));
+    const bool mipmapped = levels > 1;
+    put(file, 8, capsFlag | heightFlag | widthFlag | pixelFormatFlag | (dxgi ? linearSizeFlag : pitchFlag) | (mipmapped ? mipMapCountFlag : 0));
     put(file, 12, static_cast<std::uint32_t>(height));
     put(file, 16, static_cast<std::uint32_t>(width));
     const std::uint32_t pixelBytes = format == Scene::PixelFormat::G8 ? 1 : 4;
-    put(file, 20, static_cast<std::uint32_t>(dxgi ? payloadSize : static_cast<std::size_t>(width) * pixelBytes));
-    put(file, 28, 1);
+    const std::size_t topBytes = dxgi ? static_cast<std::size_t>((width + 3) / 4) * ((height + 3) / 4) * dxgiBlockBytes(format) : 0;
+    put(file, 20, static_cast<std::uint32_t>(dxgi ? topBytes : static_cast<std::size_t>(width) * pixelBytes));
+    put(file, 28, static_cast<std::uint32_t>(levels));
     put(file, 76, 32);
-    put(file, 108, textureCaps);
+    put(file, 108, textureCaps | (mipmapped ? complexCaps | mipMapCaps : 0));
     if (dxgi) {
         put(file, 80, fourCc);
         std::memcpy(file.data() + 84, "DX10", 4);
@@ -124,13 +132,16 @@ std::expected<void, Core::Error> DdsImage::write(std::span<std::uint8_t> file) c
         std::memcpy(file.data() + dataOffset, texture->data.data(), payloadSize);
         return {};
     }
-    return Scene::readTextureMip(*mip, std::as_writable_bytes(file.subspan(dataOffset)), gamePath, stop);
+    return Scene::readTextureMips(*mips, std::as_writable_bytes(file.subspan(dataOffset)), gamePath, stop);
 }
 
 std::expected<TextureView, Core::Error> readDds(const std::span<const std::uint8_t> file, const bool srgb) {
     if (file.size() < headerSize || std::memcmp(file.data(), "DDS ", 4) != 0)
         return Core::fail("dds.format", "The image is not a DDS file.");
-    TextureView texture{.srgb = srgb, .width = static_cast<int>(get(file, 16)), .height = static_cast<int>(get(file, 12))};
+    TextureView texture{.srgb = srgb,
+                        .width = static_cast<int>(get(file, 16)),
+                        .height = static_cast<int>(get(file, 12)),
+                        .levels = (get(file, 8) & mipMapCountFlag) != 0 ? std::max(static_cast<int>(get(file, 28)), 1) : 1};
     std::size_t dataOffset = headerSize;
     const std::uint32_t flags = get(file, 80);
     if ((flags & fourCc) != 0 && std::memcmp(file.data() + 84, "DX10", 4) == 0) {

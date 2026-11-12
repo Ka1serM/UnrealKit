@@ -12,7 +12,7 @@ namespace UnrealKit::Scene {
 
 class DdsImage {
 public:
-    DdsImage(const Scene::TextureMip& mip, std::string_view gamePath, std::stop_token stop);
+    DdsImage(const Scene::TextureMips& mips, std::string_view gamePath, std::stop_token stop);
     explicit DdsImage(const Scene::Texture& texture);
 
     std::size_t getSize() const;
@@ -23,8 +23,9 @@ private:
     bool srgb;
     int width;
     int height;
+    int levels;
     std::size_t payloadSize;
-    const Scene::TextureMip* mip = nullptr;
+    const Scene::TextureMips* mips = nullptr;
     const Scene::Texture* texture = nullptr;
     std::string_view gamePath;
     std::stop_token stop;

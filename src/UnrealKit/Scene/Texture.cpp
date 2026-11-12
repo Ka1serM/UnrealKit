@@ -73,7 +73,7 @@ size_t storedSize(const PixelFormat format, const size_t width, const size_t hei
 
 }
 
-std::expected<TextureMip, Core::Error> findTextureMip(const Assets::Provider& provider, const std::string_view gamePath, const std::stop_token stop) {
+std::expected<TextureMips, Core::Error> findTextureMips(const Assets::Provider& provider, const std::string_view gamePath, const std::stop_token stop) {
     (void)provider;
     const std::expected<ue::UTexture2D*, Core::Error> source = Assets::Reading::loadObject<ue::UTexture2D>(gamePath, "texture", stop);
     if (!source)
@@ -87,33 +87,48 @@ std::expected<TextureMip, Core::Error> findTextureMip(const Assets::Provider& pr
     const std::expected<PixelFormat, Core::Error> format = formatOf(data->PixelFormat, gamePath);
     if (!format)
         return std::unexpected(format.error());
-    const ue::FTexture2DMipMap& mip = data->Mips[first];
-    const TextureMip result{.format = *format, .srgb = (*source)->SRGB, .width = mip.SizeX, .height = mip.SizeY, .data = &mip.BulkData};
+    const ue::FTexture2DMipMap& top = data->Mips[first];
+    TextureMips result{.format = *format, .srgb = (*source)->SRGB, .width = top.SizeX, .height = top.SizeY};
     if (result.width <= 0 || result.height <= 0)
         return Core::fail("texture.mip", std::format("The mip of '{}' is {}x{}.", gamePath, result.width, result.height));
-    const size_t expected = storedSize(result.format, result.width, result.height);
-    if (result.getSize() != expected)
-        return Core::fail("texture.mip", std::format("The mip of '{}' has {} bytes, not {}.", gamePath, result.getSize(), expected));
+    const int count = static_cast<int>(data->Mips.Num());
+    result.levels.reserve(static_cast<size_t>(count - first));
+    for (int index = first; index < count; ++index) {
+        const ue::FTexture2DMipMap& mip = data->Mips[index];
+        const int level = index - first;
+        const int width = std::max(result.width >> level, 1);
+        const int height = std::max(result.height >> level, 1);
+        if (mip.SizeX != width || mip.SizeY != height)
+            return Core::fail("texture.mip", std::format("Mip {} of '{}' is {}x{}, not {}x{}.", level, gamePath, mip.SizeX, mip.SizeY, width, height));
+        const size_t expected = storedSize(result.format, static_cast<size_t>(width), static_cast<size_t>(height));
+        if (mip.BulkData.GetPayloadSize() != expected)
+            return Core::fail("texture.mip", std::format("Mip {} of '{}' has {} bytes, not {}.", level, gamePath, mip.BulkData.GetPayloadSize(), expected));
+        result.levels.push_back(&mip.BulkData);
+        result.size += expected;
+    }
     return result;
 }
 
-std::expected<void, Core::Error> readTextureMip(const TextureMip& mip, const std::span<std::byte> output, const std::string_view gamePath,
-                                                const std::stop_token stop) {
-    if (stop.stop_requested())
-        return Core::cancelled();
-    const auto read = mip.data->ReadInto(output);
-    if (!read)
-        return fail("texture.mip", gamePath, read.error());
+std::expected<void, Core::Error> readTextureMips(const TextureMips& mips, std::span<std::byte> output, const std::string_view gamePath,
+                                                 const std::stop_token stop) {
+    for (const ue5parse::runtime::FByteBulkData* level : mips.levels) {
+        if (stop.stop_requested())
+            return Core::cancelled();
+        const size_t size = level->GetPayloadSize();
+        if (const auto read = level->ReadInto(output.first(size)); !read)
+            return fail("texture.mip", gamePath, read.error());
+        output = output.subspan(size);
+    }
     return {};
 }
 
 std::expected<Texture, Core::Error> readTexture(const Assets::Provider& provider, const std::string_view gamePath, const std::stop_token stop) {
-    const std::expected<TextureMip, Core::Error> mip = findTextureMip(provider, gamePath, stop);
-    if (!mip)
-        return std::unexpected(mip.error());
-    Texture texture{.format = mip->format, .srgb = mip->srgb, .width = mip->width, .height = mip->height};
-    texture.data.resize(mip->getSize());
-    if (std::expected<void, Core::Error> read = readTextureMip(*mip, texture.data, gamePath, stop); !read)
+    const std::expected<TextureMips, Core::Error> mips = findTextureMips(provider, gamePath, stop);
+    if (!mips)
+        return std::unexpected(mips.error());
+    Texture texture{.format = mips->format, .srgb = mips->srgb, .width = mips->width, .height = mips->height, .levels = static_cast<int>(mips->levels.size())};
+    texture.data.resize(mips->size);
+    if (std::expected<void, Core::Error> read = readTextureMips(*mips, texture.data, gamePath, stop); !read)
         return std::unexpected(read.error());
     return texture;
 }
@@ -121,7 +136,6 @@ std::expected<Texture, Core::Error> readTexture(const Assets::Provider& provider
 namespace {
 
 using Rgba = std::array<std::uint8_t, 4>;
-using RgbaFloat = std::array<float, 4>;
 
 template <size_t BlockBytes, typename Pixel = Rgba, typename DecodeBlock>
 std::vector<Pixel> decodeBlocks(const TextureView& texture, DecodeBlock decodeBlock) {
@@ -244,6 +258,17 @@ std::vector<std::byte> bytesOf(const std::vector<Rgba>& pixels) {
 
 Texture decodeToRgba(const TextureView& texture) {
     return {.format = PixelFormat::R8G8B8A8, .srgb = texture.srgb, .width = texture.width, .height = texture.height, .data = bytesOf(decodePixels(texture))};
+}
+
+std::vector<RgbaFloat> decodeToFloat(const TextureView& texture) {
+    if (texture.format == PixelFormat::BC6H || texture.format == PixelFormat::FloatRGBA)
+        return decodeFloatPixels(texture);
+    const std::vector<Rgba> bytes = decodePixels(texture);
+    std::vector<RgbaFloat> pixels(bytes.size());
+    for (size_t i = 0; i < bytes.size(); ++i)
+        for (size_t c = 0; c < 4; ++c)
+            pixels[i][c] = bytes[i][c] / 255.0f;
+    return pixels;
 }
 
 Texture encodeToBc6h(const Texture& texture) {

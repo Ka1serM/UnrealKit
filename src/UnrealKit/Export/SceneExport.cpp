@@ -365,17 +365,17 @@ std::expected<std::vector<std::vector<std::string>>, Core::Error> SceneSender::s
                 strip = Scene::encodeToBc6h(strip);
             frame = Scene::image(path, Scene::datablockName(path), Scene::DdsImage(strip), strip.srgb);
         } else {
-            const auto mip = Scene::findTextureMip(provider, path, stop);
-            if (!mip)
-                return warn(diagnostics, "export.texture_unreadable", path, mip.error());
-            if (mip->format == Scene::PixelFormat::FloatRGBA) {
+            const auto mips = Scene::findTextureMips(provider, path, stop);
+            if (!mips)
+                return warn(diagnostics, "export.texture_unreadable", path, mips.error());
+            if (mips->format == Scene::PixelFormat::FloatRGBA) {
                 const auto texture = Scene::readTexture(provider, path, stop);
                 if (!texture)
                     return warn(diagnostics, "export.texture_unreadable", path, texture.error());
                 const Scene::Texture encoded = Scene::encodeToBc6h(*texture);
                 frame = Scene::image(path, Scene::datablockName(path), Scene::DdsImage(encoded), encoded.srgb);
             } else {
-                frame = Scene::image(path, Scene::datablockName(path), Scene::DdsImage(*mip, path, stop), mip->srgb);
+                frame = Scene::image(path, Scene::datablockName(path), Scene::DdsImage(*mips, path, stop), mips->srgb);
             }
         }
         if (!frame)
