@@ -10,6 +10,6 @@ namespace UnrealKit::Materials {
 
 using CompiledShader = ue5parse::conversion::CompiledMaterialShader;
 
-std::expected<CompiledShader, Core::Error> compileShader(const MaterialData& data, const ShaderData& shader);
+std::expected<CompiledShader, Core::Error> compileShader(const MaterialData& data, const ShaderData& shader, ue5parse::conversion::SpirvCache& cache);
 
 }

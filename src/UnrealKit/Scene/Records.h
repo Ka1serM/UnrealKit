@@ -11,8 +11,8 @@
 
 #include <flatbuffers/flatbuffers.h>
 
+#include "Conversion/Materials/MaterialProgram.h"
 #include "UnrealKit/Core/Diagnostic.h"
-#include "UnrealKit/Materials/MaterialProgram.h"
 #include "UnrealKit/Scene/DdsImage.h"
 #include "UnrealKit/Scene/Matrix.h"
 #include "scene_generated.h"
@@ -32,7 +32,7 @@ struct SceneMaterial {
     std::vector<std::string> chain;
     std::string blendMode;
     bool twoSided = false;
-    Materials::MaterialProgram program;
+    ue5parse::conversion::MaterialProgram program;
     bool unlit = false;
     int sortPriority = 0;
     bool disableDepthTest = false;
@@ -174,7 +174,7 @@ Frame complete(std::span<const Core::Diagnostic> diagnostics);
 Frame failed(const Core::Diagnostic& diagnostic);
 std::expected<Frame, Core::Error> image(std::string_view key, std::string_view name, const DdsImage& file, bool srgb);
 Frame material(const SceneMaterial& material);
-Materials::MaterialProgram readProgram(const scene::stream::MaterialProgram& program);
+ue5parse::conversion::MaterialProgram readProgram(const scene::stream::MaterialProgram& program);
 Frame light(const SceneLight& light);
 Frame camera(const SceneCamera& camera);
 Frame instances(const SceneInstances& instances);

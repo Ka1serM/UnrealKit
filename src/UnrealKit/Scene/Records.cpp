@@ -5,6 +5,8 @@
 #include <format>
 #include <string_view>
 
+#include "Conversion/Spirv/ExpressionGraph.h"
+
 namespace UnrealKit::Scene {
 
 namespace {
@@ -147,7 +149,19 @@ std::expected<Frame, Core::Error> image(const std::string_view key, const std::s
 
 namespace {
 
-flatbuffers::Offset<scene::stream::MaterialProgram> materialProgram(Builder& builder, const Materials::MaterialProgram& program) {
+using ue5parse::conversion::GeometryAttribute;
+using ue5parse::conversion::ProgramInstruction;
+using ue5parse::conversion::ProgramOp;
+
+static_assert(static_cast<uint8_t>(ProgramOp::MulAdd) == static_cast<uint8_t>(scene::stream::MaterialOp::MAX));
+static_assert(static_cast<uint8_t>(ProgramOp::Combine) == static_cast<uint8_t>(scene::stream::MaterialOp::Combine));
+static_assert(static_cast<uint8_t>(ProgramOp::Select) == static_cast<uint8_t>(scene::stream::MaterialOp::Select));
+static_assert(static_cast<uint32_t>(scene::stream::MaterialGeometry::VertexColor) == static_cast<uint32_t>(GeometryAttribute::VertexColor));
+static_assert(static_cast<uint32_t>(scene::stream::MaterialGeometry::SceneDepth) == static_cast<uint32_t>(GeometryAttribute::SceneDepth));
+static_assert(static_cast<uint32_t>(scene::stream::MaterialGeometry::CustomData8) == static_cast<uint32_t>(GeometryAttribute::CustomData8));
+static_assert(static_cast<uint32_t>(scene::stream::MaterialGeometry::LocalPosition) == static_cast<uint32_t>(GeometryAttribute::LocalPosition));
+
+flatbuffers::Offset<scene::stream::MaterialProgram> materialProgram(Builder& builder, const ue5parse::conversion::MaterialProgram& program) {
     std::vector<flatbuffers::Offset<scene::stream::MaterialParameter>> parameters;
     parameters.reserve(program.parameters.size());
     for (const auto& [name, value] : program.parameters)
@@ -155,9 +169,15 @@ flatbuffers::Offset<scene::stream::MaterialProgram> materialProgram(Builder& bui
     std::vector<flatbuffers::Offset<scene::stream::MaterialTexture>> textures;
     textures.reserve(program.textures.size());
     for (const auto& [image, name, addressU, addressV, nearest] : program.textures)
-        textures.push_back(scene::stream::CreateMaterialTexture(builder, builder.CreateString(image), name.empty() ? 0 : builder.CreateString(name), addressU,
-                                                                addressV, nearest));
-    return scene::stream::CreateMaterialProgram(builder, builder.CreateVectorOfStructs(program.instructions), builder.CreateVector(program.constants),
+        textures.push_back(scene::stream::CreateMaterialTexture(builder, builder.CreateString(image), name.empty() ? 0 : builder.CreateString(name),
+                                                                static_cast<scene::stream::TextureAddress>(addressU),
+                                                                static_cast<scene::stream::TextureAddress>(addressV), nearest));
+    const auto instructions = builder.CreateVectorOfStructs<scene::stream::MaterialInstruction>(
+        program.instructions.size(), [&](const std::size_t index, scene::stream::MaterialInstruction* encoded) {
+            const ProgramInstruction& instruction = program.instructions[index];
+            *encoded = {static_cast<scene::stream::MaterialOp>(instruction.op), instruction.width, instruction.index, instruction.a, instruction.b, instruction.c};
+        });
+    return scene::stream::CreateMaterialProgram(builder, instructions, builder.CreateVector(program.constants),
                                                 builder.CreateVector(parameters), builder.CreateVector(textures), program.baseColor, program.normal,
                                                 program.emission, program.roughness, program.metallic, program.specular, program.opacity, program.displacement,
                                                 program.refraction);
@@ -165,9 +185,8 @@ flatbuffers::Offset<scene::stream::MaterialProgram> materialProgram(Builder& bui
 
 }
 
-Materials::MaterialProgram readProgram(const scene::stream::MaterialProgram& program) {
-    const auto* instructions = reinterpret_cast<const scene::stream::MaterialInstruction*>(program.instructions()->Data());
-    Materials::MaterialProgram result{.instructions = {instructions, instructions + program.instructions()->size()},
+ue5parse::conversion::MaterialProgram readProgram(const scene::stream::MaterialProgram& program) {
+    ue5parse::conversion::MaterialProgram result{.instructions = {},
                                       .constants = {},
                                       .parameters = {},
                                       .textures = {},
@@ -180,6 +199,10 @@ Materials::MaterialProgram readProgram(const scene::stream::MaterialProgram& pro
                                       .opacity = program.opacity(),
                                       .refraction = program.refraction(),
                                       .displacement = program.displacement()};
+    result.instructions.reserve(program.instructions()->size());
+    for (const scene::stream::MaterialInstruction* instruction : *program.instructions())
+        result.instructions.push_back({static_cast<ProgramOp>(instruction->op()), instruction->width(), instruction->index(), instruction->a(),
+                                       instruction->b(), instruction->c()});
     if (program.constants())
         result.constants.assign(program.constants()->begin(), program.constants()->end());
     if (program.parameters())
@@ -187,13 +210,14 @@ Materials::MaterialProgram readProgram(const scene::stream::MaterialProgram& pro
             result.parameters.push_back({parameter->name()->str(), {parameter->value()->begin(), parameter->value()->end()}});
     if (program.textures())
         for (const scene::stream::MaterialTexture* texture : *program.textures())
-            result.textures.push_back({texture->image()->str(), texture->name() ? texture->name()->str() : std::string(), texture->address_u(),
-                                       texture->address_v(), texture->nearest()});
+            result.textures.push_back({texture->image()->str(), texture->name() ? texture->name()->str() : std::string(),
+                                       static_cast<ue5parse::conversion::TextureAddress>(texture->address_u()),
+                                       static_cast<ue5parse::conversion::TextureAddress>(texture->address_v()), texture->nearest()});
     return result;
 }
 
 Frame material(const SceneMaterial& material) {
-    const Materials::MaterialProgram& program = material.program;
+    const ue5parse::conversion::MaterialProgram& program = material.program;
     Builder builder(program.instructions.size() * sizeof(scene::stream::MaterialInstruction) + program.constants.size() * sizeof(float) + 4096);
     const auto key = builder.CreateString(material.key);
     const auto name = builder.CreateString(material.name);

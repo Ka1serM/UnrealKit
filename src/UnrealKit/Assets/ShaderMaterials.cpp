@@ -164,7 +164,7 @@ std::expected<MaterialTranslation, Core::Error> ShaderMaterials::translate(const
     shaderData.reserve(exported->shaders.size());
     for (std::size_t i = 0; i < exported->shaders.size(); ++i) {
         const ue5parse::conversion::MaterialShaderCode& code = exported->shaders[i];
-        shaderData.push_back({code.typeName, shaderStages[i], {reinterpret_cast<const uint8_t*>(code.code.data()), code.code.size()}});
+        shaderData.push_back({code.typeName, shaderStages[i], {reinterpret_cast<const uint8_t*>(code.code.data()), code.code.size()}, code.hash});
     }
 
     const ue::FUniformExpressionSet& expressions = map.Content.MaterialCompilationOutput.UniformExpressionSet;

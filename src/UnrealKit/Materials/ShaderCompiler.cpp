@@ -24,10 +24,10 @@ void dumpSpirVToEnvDir(std::string_view owner, std::string_view type, std::span<
         .write(reinterpret_cast<const char*>(spirv.data()), static_cast<std::streamsize>(spirv.size() * 4));
 }
 
-std::expected<CompiledShader, Core::Error> compileShader(const MaterialData& data, const ShaderData& shader) {
-    auto compiled = ue5parse::conversion::compileMaterialShader(data, shader);
+std::expected<CompiledShader, Core::Error> compileShader(const MaterialData& data, const ShaderData& shader, ue5parse::conversion::SpirvCache& cache) {
+    auto compiled = ue5parse::conversion::compileMaterialShader(data, shader, cache);
     if (compiled) {
-        dumpSpirVToEnvDir(data.owner, shader.type, {compiled->spirv.data(), compiled->spirv.size()});
+        dumpSpirVToEnvDir(data.owner, shader.type, *compiled->spirv);
         return std::move(*compiled);
     }
     const ue5parse::conversion::ConversionError& error = compiled.error();

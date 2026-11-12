@@ -8,9 +8,9 @@
 #include <utility>
 #include <vector>
 
+#include "Conversion/Materials/MaterialProgram.h"
 #include "UnrealKit/Core/Error.h"
 #include "UnrealKit/Materials/MaterialData.h"
-#include "UnrealKit/Materials/MaterialProgram.h"
 #include "UnrealKit/Materials/ShaderCompiler.h"
 
 namespace UnrealKit::Materials {
@@ -29,10 +29,11 @@ private:
 
     std::mutex mutex;
     std::map<std::pair<std::string, VertexFactory>, Entry> entries;
+    ue5parse::conversion::SpirvCache spirv;
 };
 
 struct Translation {
-    MaterialProgram program;
+    ue5parse::conversion::MaterialProgram program;
     std::vector<std::string> warnings;
 };
 

@@ -21,7 +21,7 @@ namespace ue = ue5parse::runtime;
 namespace UnrealKit::Assets {
 
 struct MaterialTranslation {
-    Materials::MaterialProgram program;
+    ue5parse::conversion::MaterialProgram program;
     std::vector<std::string> textures;
     std::vector<std::string> warnings;
 };
