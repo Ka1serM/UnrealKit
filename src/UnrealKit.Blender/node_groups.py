@@ -99,7 +99,7 @@ class NodeWriter:
 
     def vector_transform(self, kind, source, target, vector):
         node = self.new("ShaderNodeVectorTransform", vector_type=kind, convert_from=source, convert_to=target)
-        node.inputs[0].default_value = vector
+        node.inputs["Vector"].default_value = vector
         return Value(3, socket=node.outputs[0])
 
     def group(self, name, *operands):

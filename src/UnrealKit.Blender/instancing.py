@@ -164,13 +164,15 @@ class TreeWriter:
         for name, setting in settings.items():
             setattr(node, name, setting)
         for index, value in enumerate(inputs):
-            if value is None:
-                continue
-            if isinstance(value, bpy.types.NodeSocket):
-                self.tree.links.new(value, node.inputs[index])
-            else:
-                node.inputs[index].default_value = value
+            if value is not None:
+                self.connect(node.inputs[index], value)
         return node
+
+    def connect(self, socket, value):
+        if isinstance(value, bpy.types.NodeSocket):
+            self.tree.links.new(value, socket)
+        else:
+            socket.default_value = value
 
     def output(self, kind, inputs=(), name=0, **settings):
         return self.new(kind, inputs, **settings).outputs[name]
@@ -240,7 +242,9 @@ def facing_shader_group(facing):
         return w.output("ShaderNodeAttribute", (), output, attribute_type="INSTANCER", attribute_name=name)
 
     def transform(vector, vector_type, source, target):
-        return w.output("ShaderNodeVectorTransform", (vector,), vector_type=vector_type, convert_from=source, convert_to=target)
+        node = w.new("ShaderNodeVectorTransform", vector_type=vector_type, convert_from=source, convert_to=target)
+        w.connect(node.inputs["Vector"], vector)
+        return node.outputs["Vector"]
 
     def along(axes, vector):
         parts = w.new("ShaderNodeSeparateXYZ", (vector,))
