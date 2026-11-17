@@ -10,7 +10,7 @@ add_library(UnrealKit::UnrealKit ALIAS UnrealKit)
 target_include_directories(UnrealKit PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(UnrealKit PUBLIC scene_schema bcdec CppUE5Parse::Core CppUE5Parse::CoreUObject CppUE5Parse::RenderCore
     CppUE5Parse::Engine CppUE5Parse::Conversion nlohmann_json::nlohmann_json UsmapGen::UsmapGen zstd)
-target_compile_options(UnrealKit PRIVATE -fno-exceptions)
+target_compile_options(UnrealKit PRIVATE -fno-exceptions -fno-rtti)
 target_compile_definitions(UnrealKit
     PUBLIC PLATFORM_WINDOWS=$<BOOL:${PLATFORM_WINDOWS}> PLATFORM_LINUX=$<BOOL:${PLATFORM_LINUX}> PLATFORM_WEB=$<BOOL:${PLATFORM_WEB}>
         UNREALKIT_DEBUG_LOG=$<CONFIG:Debug,RelWithDebInfo>
