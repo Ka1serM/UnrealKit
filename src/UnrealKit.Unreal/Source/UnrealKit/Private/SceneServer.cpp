@@ -10,7 +10,7 @@
 #include "HAL/PlatformTime.h"
 #include "HAL/RunnableThread.h"
 #include "HAL/ThreadSafeCounter.h"
-#include "ImporterProduct.h"
+#include "Importer.h"
 #include "Interfaces/IPluginManager.h"
 #include "Misc/Base64.h"
 #include "Misc/SecureHash.h"

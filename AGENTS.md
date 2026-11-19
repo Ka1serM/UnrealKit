@@ -125,8 +125,9 @@ conflict yourself.
   style and its `.clang-format`.
 - UnrealKit has no RmlUi code and no game-specific code. Stock Unreal classes
   go into CppUE5Parse. A game's classes, its install layout, and its patch
-  servers go into the app. The importers know a product only through the
-  values that `cmake/Importers.cmake` fills in.
+  servers go into the app. The importers have no product: every app shares
+  the UnrealKit Blender extension and Unreal Editor plugin. A game-specific
+  import step goes into a second extension or plugin of the app.
 - Build and repository tools go into the top-level `tools/` folder, not into a
   plugin or module folder.
 - Activate the pre-commit hook once in each clone:

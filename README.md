@@ -1,7 +1,8 @@
 # UnrealKit
 
 A C++23 library for Unreal Engine game files: it mounts the archives, reads maps, meshes, materials, and textures, and
-streams them as a FlatBuffers scene to a Blender extension and an Unreal Editor plugin.
+streams them as a FlatBuffers scene to the UnrealKit Blender extension and the UnrealKit Unreal Editor plugin. Every app
+shares these importers: they have one name, one version, and one port each.
 
 ## Usage
 
@@ -9,23 +10,19 @@ streams them as a FlatBuffers scene to a Blender extension and an Unreal Editor 
 include(external/UnrealKit/cmake/Importers.cmake)
 add_subdirectory(external/UnrealKit EXCLUDE_FROM_ALL)
 
-unrealkit_add_blender_extension(ID example NAME Example VERSION 1.0.0 MAINTAINER "Name" BLENDER_PORT 17472
-    OUTPUT "${PROJECT_BINARY_DIR}/blender_extension")
-unrealkit_add_unreal_plugin(MODULE Example NAME Example VERSION 1.0.0 MAINTAINER "Name" UNREAL_PORT 17473
-    OUTPUT "${PROJECT_BINARY_DIR}/plugins/Example")
+unrealkit_add_blender_extension(OUTPUT "${PROJECT_BINARY_DIR}/blender_extension")
+unrealkit_add_unreal_plugin(OUTPUT "${PROJECT_BINARY_DIR}/plugins/UnrealKit")
 
 add_executable(App Main.cpp)
 target_link_libraries(App PRIVATE UnrealKit::UnrealKit)
 ```
 
 ```cpp
-constexpr UnrealKit::Transport::Product product{"Example", "1.0.0", 17472, 17473};
-
 UnrealKit::Assets::Provider provider;
 auto archives = UnrealKit::Assets::openArchiveDirectory(paksDirectory);
 auto mounted = provider.mount({.game = ue5parse::EGame::GAME_UE5_4, .archives = std::move(*archives), .aesKey = key}, stop);
 
-UnrealKit::Transport::SceneSession session(product, UnrealKit::Transport::Importer::Blender, stop, onVersionMismatch);
+UnrealKit::Transport::SceneSession session(UnrealKit::Transport::Importer::Blender, stop, onVersionMismatch);
 ```
 
 ### Mappings
@@ -44,7 +41,8 @@ fails with the file and the key when a value has the wrong type.
 
 `unrealkit_add_blender_extension` also sets `BLENDER_TEST_COMMAND`: `tools/e2e/blender_test.py` with the staged
 extension. It starts Blender in the background, runs a driver command after `--`, and checks the scene that arrived.
-`unrealkit_add_blender_repository(OUTPUT <folder>)` packs the extension into a Blender extension repository.
+`unrealkit_add_blender_repository(OUTPUT <folder> EXTENSIONS <staged folder>... DEPENDS <target>...)` packs the
+UnrealKit extension and the app's own extensions into one Blender extension repository.
 
 In the browser, `web/pre.js` mounts the folders that the user picks and restores them at the next start. The app's
 own `--pre-js` calls `Module.unrealkitStart(status)` before `Module.callMain()`, and `Module.unrealkitChoose(kind,

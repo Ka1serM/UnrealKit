@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.29)
-project(UnrealKit LANGUAGES C CXX)
+project(UnrealKit VERSION 1.0.0 LANGUAGES C CXX)
+
+set(UNREALKIT_VERSION "${PROJECT_VERSION}" CACHE INTERNAL "The version of the UnrealKit importers")
+set(UNREALKIT_BLENDER_PORT 24002 CACHE INTERNAL "The port the UnrealKit Blender extension listens on")
+set(UNREALKIT_UNREAL_PORT 24021 CACHE INTERNAL "The port the UnrealKit Unreal Editor plugin listens on")
 
 include(cmake/CompilerOptions.cmake)
 

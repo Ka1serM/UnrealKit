@@ -5,7 +5,7 @@ import traceback
 import bpy
 
 from . import deferred_update, session
-from .product import NAME
+from .importer import NAME
 from .builders import SceneBuilder
 from .server import HOST, PORT, Server
 

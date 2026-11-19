@@ -10,7 +10,7 @@ from . import material_program
 from . import scene_generated as fb
 from . import space
 from .node_groups import REVERSE_CULLING, NodeWriter, Value
-from .product import NAME
+from .importer import NAME
 from .session import text
 
 KEY = "unrealkit.key"

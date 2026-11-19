@@ -25,8 +25,8 @@ std::span<const std::uint8_t> bytesOf(const std::string& message) {
 
 }
 
-SceneSession::SceneSession(const Product product, const Importer importer, std::stop_token stop, VersionMismatch versionMismatch)
-    : product(product), importer(importer), stop(std::move(stop)), versionMismatch(std::move(versionMismatch)), socket(writeTimeout) {}
+SceneSession::SceneSession(const Importer importer, std::stop_token stop, VersionMismatch versionMismatch)
+    : importer(importer), stop(std::move(stop)), versionMismatch(std::move(versionMismatch)), socket(writeTimeout) {}
 
 std::unexpected<Core::Error> SceneSession::fail(const std::string_view message) const {
     return Core::fail("importer", std::format("{} {}", importerName(importer), message));
@@ -52,11 +52,11 @@ SceneSession::~SceneSession() {
 
 std::expected<void, Core::Error> SceneSession::open(Progress progress) {
     this->progress = std::move(progress);
-    const int port = importerPort(product, importer);
+    const int port = importerPort(importer);
     if (!socket.connect(std::format("ws://127.0.0.1:{}/scene", port), connectTimeout))
-        return fail(std::format("is not listening on 127.0.0.1:{}. Start it with the {} {} enabled.", port, product.name,
+        return fail(std::format("is not listening on 127.0.0.1:{}. Start it with the UnrealKit {} enabled.", port,
                                 importer == Importer::Blender ? "extension" : "plugin"));
-    if (std::expected<void, Core::Error> sent = socket.send(bytesOf(Scene::hello(product.version))); !sent)
+    if (std::expected<void, Core::Error> sent = socket.send(bytesOf(Scene::hello(importerVersion()))); !sent)
         return sent;
     if (std::expected<void, Core::Error> ready = handshake(); !ready)
         return ready;
@@ -82,8 +82,8 @@ std::expected<void, Core::Error> SceneSession::handshake() {
         if (envelope == nullptr)
             return fail("sent a message that is not a scene stream record.");
         if (const auto* hello = envelope->record_as_Hello()) {
-            const std::string_view version = hello->product_version() ? hello->product_version()->string_view() : std::string_view();
-            if (version != product.version && versionMismatch)
+            const std::string_view version = hello->importer_version() ? hello->importer_version()->string_view() : std::string_view();
+            if (version != importerVersion() && versionMismatch)
                 versionMismatch(version);
             if (hello->version() != scene::stream::Version::Current)
                 return fail(std::format("speaks scene stream version {}, the app {}. Install the importer of this app.", static_cast<int>(hello->version()),

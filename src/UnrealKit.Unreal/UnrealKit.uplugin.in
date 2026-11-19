@@ -1,0 +1,19 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "@UNREALKIT_VERSION@",
+	"FriendlyName": "UnrealKit",
+	"Description": "Imports the scenes that UnrealKit apps export.",
+	"Category": "Importers",
+	"CreatedBy": "Marcel K.",
+	"EngineVersion": "5.7.0",
+	"CanContainContent": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "UnrealKit",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}
