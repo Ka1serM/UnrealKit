@@ -18,8 +18,12 @@ std::optional<Importer> importerOfId(const std::string_view id) {
     return std::nullopt;
 }
 
-int importerPort(const Product& product, const Importer importer) {
-    return importer == Importer::Blender ? product.blenderPort : product.unrealPort;
+std::string_view importerVersion() {
+    return UNREALKIT_VERSION;
+}
+
+int importerPort(const Importer importer) {
+    return importer == Importer::Blender ? UNREALKIT_BLENDER_PORT : UNREALKIT_UNREAL_PORT;
 }
 
 }

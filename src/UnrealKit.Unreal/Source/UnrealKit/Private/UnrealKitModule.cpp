@@ -18,4 +18,4 @@ private:
 	TUniquePtr<FSceneServer> Server;
 };
 
-IMPLEMENT_MODULE(FImporterModule, @IMPORTER_MODULE@)
+IMPLEMENT_MODULE(FImporterModule, UnrealKit)

@@ -9,7 +9,7 @@ import traceback
 
 import numpy as np
 
-from .product import NAME, PORT
+from .importer import NAME, PORT
 
 HOST = "127.0.0.1"
 PATH = "/scene"

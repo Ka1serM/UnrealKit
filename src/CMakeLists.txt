@@ -14,7 +14,8 @@ target_compile_options(UnrealKit PRIVATE -fno-exceptions -fno-rtti)
 target_compile_definitions(UnrealKit
     PUBLIC PLATFORM_WINDOWS=$<BOOL:${PLATFORM_WINDOWS}> PLATFORM_LINUX=$<BOOL:${PLATFORM_LINUX}> PLATFORM_WEB=$<BOOL:${PLATFORM_WEB}>
         UNREALKIT_DEBUG_LOG=$<CONFIG:Debug,RelWithDebInfo>
-    PRIVATE PRODUCT_NAME="${CMAKE_PROJECT_NAME}")
+    PRIVATE PRODUCT_NAME="${CMAKE_PROJECT_NAME}" UNREALKIT_VERSION="${UNREALKIT_VERSION}" UNREALKIT_BLENDER_PORT=${UNREALKIT_BLENDER_PORT}
+        UNREALKIT_UNREAL_PORT=${UNREALKIT_UNREAL_PORT})
 target_precompile_headers(UnrealKit PRIVATE <algorithm> <expected> <format> <memory> <optional> <stop_token> <string> <string_view>
     <utility> <vector> "${CMAKE_CURRENT_SOURCE_DIR}/UnrealKit/Core/StdGaps.h")
 

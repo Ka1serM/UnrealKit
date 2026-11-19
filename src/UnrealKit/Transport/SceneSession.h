@@ -25,7 +25,7 @@ class SceneSession final : public RecordSink {
 public:
     using VersionMismatch = std::function<void(std::string_view importerVersion)>;
 
-    SceneSession(Product product, Importer importer, std::stop_token stop, VersionMismatch versionMismatch);
+    SceneSession(Importer importer, std::stop_token stop, VersionMismatch versionMismatch);
     ~SceneSession() override;
     SceneSession(const SceneSession&) = delete;
     SceneSession& operator=(const SceneSession&) = delete;
@@ -43,7 +43,6 @@ private:
     std::unexpected<Core::Error> fail(std::string_view message) const;
     std::string failureText(const scene::stream::Failed& failed) const;
 
-    Product product;
     Importer importer;
     std::stop_token stop;
     VersionMismatch versionMismatch;

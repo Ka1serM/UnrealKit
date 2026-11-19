@@ -1,9 +1,9 @@
 using System.IO;
 using UnrealBuildTool;
 
-public class @IMPORTER_MODULE@ : ModuleRules
+public class UnrealKit : ModuleRules
 {
-	public @IMPORTER_MODULE@(ReadOnlyTargetRules Target) : base(Target)
+	public UnrealKit(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "ThirdParty"));

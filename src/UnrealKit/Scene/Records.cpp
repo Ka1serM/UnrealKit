@@ -109,9 +109,9 @@ std::string_view datablockName(const std::string_view objectPath) {
     return objectPath.substr(objectPath.rfind('.') + 1);
 }
 
-Frame hello(const std::string_view productVersion) {
+Frame hello(const std::string_view importerVersion) {
     Builder builder(64);
-    const auto version = builder.CreateString(productVersion.data(), productVersion.size());
+    const auto version = builder.CreateString(importerVersion.data(), importerVersion.size());
     return finish(builder, scene::stream::Record::Hello, scene::stream::CreateHello(builder, scene::stream::Version::Current, version));
 }
 

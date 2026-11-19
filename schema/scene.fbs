@@ -18,7 +18,7 @@ table Property {
 
 table Hello {
   version: Version = Current;
-  product_version: string;
+  importer_version: string;
 }
 table Ready {}
 

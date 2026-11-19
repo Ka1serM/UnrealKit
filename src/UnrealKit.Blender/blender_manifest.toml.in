@@ -1,10 +1,10 @@
 schema_version = "1.0.0"
 
-id = "@IMPORTER_ID@"
-version = "@IMPORTER_VERSION@"
-name = "@IMPORTER_NAME@"
-tagline = "Receive scenes from @IMPORTER_NAME@"
-maintainer = "@IMPORTER_MAINTAINER@"
+id = "unrealkit"
+version = "@UNREALKIT_VERSION@"
+name = "UnrealKit"
+tagline = "Receive scenes from UnrealKit apps"
+maintainer = "Marcel K."
 type = "add-on"
 license = ["SPDX:GPL-3.0-or-later"]
 blender_version_min = "4.5.0"
@@ -12,4 +12,4 @@ tags = ["Import-Export"]
 wheels = ["./wheels/@FLATBUFFERS_WHEEL@"]
 
 [permissions]
-network = "Listen on 127.0.0.1:@IMPORTER_BLENDER_PORT@ for scenes from @IMPORTER_NAME@"
+network = "Listen on 127.0.0.1:@UNREALKIT_BLENDER_PORT@ for scenes from UnrealKit apps"

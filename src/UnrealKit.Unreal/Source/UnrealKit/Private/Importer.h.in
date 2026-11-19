@@ -1,0 +1,9 @@
+#pragma once
+
+#include "CoreMinimal.h"
+
+constexpr TCHAR ImporterPlugin[] = TEXT("UnrealKit");
+constexpr TCHAR ImporterRoot[] = TEXT("/Game/UnrealKit");
+constexpr TCHAR ImporterMasterPackage[] = TEXT("/Game/UnrealKit/M_UnrealKit");
+constexpr TCHAR ImporterLinearWhitePackage[] = TEXT("/Game/UnrealKit/T_LinearWhite");
+constexpr int32 ImporterPort = @UNREALKIT_UNREAL_PORT@;

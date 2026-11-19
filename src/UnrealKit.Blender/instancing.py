@@ -5,7 +5,7 @@ from . import scene_generated as fb
 from . import space
 from .material_program import PARAMETER, VECTOR_NODE, parameter_input_name
 from .node_groups import CENTIMETRES, GROUP as SHARED_GROUP
-from .product import NAME
+from .importer import NAME
 
 ROTATION = "unrealkit.rotation"
 SCALE = "unrealkit.scale"

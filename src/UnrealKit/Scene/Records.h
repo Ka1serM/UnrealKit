@@ -168,7 +168,7 @@ Keys visibilityKeys(std::span<const float> keys);
 
 std::string_view datablockName(std::string_view objectPath);
 
-Frame hello(std::string_view productVersion);
+Frame hello(std::string_view importerVersion);
 Frame begin(std::string_view exportId, std::string_view title);
 Frame complete(std::span<const Core::Diagnostic> diagnostics);
 Frame failed(const Core::Diagnostic& diagnostic);

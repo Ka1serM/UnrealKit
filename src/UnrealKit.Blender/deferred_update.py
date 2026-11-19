@@ -1,7 +1,7 @@
 import bpy
 from bpy.app.handlers import persistent
 
-from .product import ID, NAME
+from .importer import ID, NAME
 
 
 class DeferredUpdateTree(bpy.types.NodeTree):

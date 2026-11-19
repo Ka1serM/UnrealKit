@@ -1,7 +1,7 @@
 import flatbuffers
 
 from . import scene_generated as fb
-from .product import NAME, VERSION
+from .importer import NAME, VERSION
 
 
 class ProtocolError(ValueError):
@@ -70,10 +70,10 @@ def _diagnostic(builder, diagnostic):
 
 def hello():
     builder = flatbuffers.Builder(48)
-    product_version = builder.CreateString(VERSION)
+    importer_version = builder.CreateString(VERSION)
     fb.HelloStart(builder)
     fb.HelloAddVersion(builder, fb.Version.Current)
-    fb.HelloAddProductVersion(builder, product_version)
+    fb.HelloAddImporterVersion(builder, importer_version)
     return _envelope(builder, fb.Record.Hello, fb.HelloEnd(builder))
 
 
