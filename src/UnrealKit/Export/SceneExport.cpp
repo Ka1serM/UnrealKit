@@ -7,15 +7,15 @@
 
 #include <tbb/parallel_for.h>
 
+#include "Engine/Source/Runtime/Engine/Materials/MaterialInterface.h"
 #include "UnrealKit/Assets/Reading.h"
 #include "UnrealKit/Core/Error.h"
 #include "UnrealKit/Core/Log.h"
-#include "Engine/Source/Runtime/Engine/Materials/MaterialInterface.h"
+#include "UnrealKit/Export/ResolvedMaterial.h"
 #include "UnrealKit/Scene/DdsImage.h"
 #include "UnrealKit/Scene/MeshRecord.h"
 #include "UnrealKit/Scene/Records.h"
 #include "UnrealKit/Scene/Texture.h"
-#include "UnrealKit/Export/ResolvedMaterial.h"
 
 namespace UnrealKit::Export {
 
@@ -51,8 +51,16 @@ std::string materialKey(const std::string& path, const Materials::VertexFactory 
         return path + ":particle sprite";
     case Materials::VertexFactory::ParticleMesh:
         return path + ":particle mesh";
+    case Materials::VertexFactory::ParticleBeam:
+        return path + ":particle beam";
     }
     std::unreachable();
+}
+
+Materials::VertexFactory instancedQuadFactory(const ExportMesh& part) {
+    if (!part.particles)
+        return Materials::VertexFactory::Mesh;
+    return part.instances->mesh == Scene::beamKey ? Materials::VertexFactory::ParticleBeam : Materials::VertexFactory::ParticleSprite;
 }
 
 class FirstFailure {
@@ -284,7 +292,7 @@ std::expected<std::vector<std::vector<std::string>>, Core::Error> SceneSender::s
     for (std::size_t i = 0; i < parts.size(); ++i) {
         const ExportMesh& part = parts[i];
         if (part.instances && part.meshPath.empty() && !part.overrides.empty()) {
-            bind(i, 0, part.overrides.front(), part.particles ? Materials::VertexFactory::ParticleSprite : Materials::VertexFactory::Mesh);
+            bind(i, 0, part.overrides.front(), instancedQuadFactory(part));
             continue;
         }
         const Scene::MeshLod* mesh = findMesh(part.meshPath);
@@ -466,9 +474,9 @@ std::expected<void, Core::Error> SceneSender::send(const ExportBatch& batch) {
     for (const ExportMesh& part : parts) {
         if (!part.instances || (!part.meshPath.empty() && (!sentMeshes.contains(part.meshPath) || failedVariants.contains(part.meshKey))))
             continue;
-        if (part.meshPath.empty() && sentMeshes.emplace(Scene::quadKey).second) {
+        if (part.meshPath.empty() && sentMeshes.emplace(part.instances->mesh).second) {
             meter.addRecords(1);
-            if (auto sent = sendRecord(Scene::quad(Scene::quadKey, "Quad")); !sent)
+            if (auto sent = sendRecord(Scene::quad(part.instances->mesh, part.instances->mesh == Scene::beamKey ? "Beam" : "Quad")); !sent)
                 return sent;
         }
         if (auto sent = sendRecord(Scene::instances(*part.instances)); !sent)

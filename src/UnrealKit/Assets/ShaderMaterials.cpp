@@ -26,6 +26,7 @@ using Reading::toString;
 constexpr std::array<std::string_view, 3> meshVertexFactories{"FLocalVertexFactory", "TGPUSkinVertexFactoryDefault", "FInstancedStaticMeshVertexFactory"};
 constexpr std::array<std::string_view, 1> spriteVertexFactories{"FParticleSpriteVertexFactory"};
 constexpr std::array<std::string_view, 1> meshParticleVertexFactories{"FMeshParticleVertexFactory"};
+constexpr std::array<std::string_view, 1> beamVertexFactories{"FParticleBeamTrailVertexFactory"};
 
 std::span<const std::string_view> vertexFactories(const Materials::VertexFactory use) {
     switch (use) {
@@ -35,6 +36,8 @@ std::span<const std::string_view> vertexFactories(const Materials::VertexFactory
         return spriteVertexFactories;
     case Materials::VertexFactory::ParticleMesh:
         return meshParticleVertexFactories;
+    case Materials::VertexFactory::ParticleBeam:
+        return beamVertexFactories;
     }
     std::unreachable();
 }

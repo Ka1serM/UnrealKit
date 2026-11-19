@@ -20,6 +20,7 @@ std::expected<Frame, Core::Error> mesh(std::string_view key, std::string_view na
                                        std::span<const unsigned char> colors);
 Frame quad(std::string_view key, std::string_view name);
 inline constexpr std::string_view quadKey = "unrealkit:quad";
+inline constexpr std::string_view beamKey = "unrealkit:beam";
 
 struct BoneAttachment {
     std::string bone;
