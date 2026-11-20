@@ -1,6 +1,6 @@
 namespace scene.stream;
 
-enum Version : ushort { Current = 9 }
+enum Version : ushort { Current = 10 }
 
 enum Severity : ubyte { Info, Warning, Error }
 
@@ -164,6 +164,7 @@ table Mesh {
   bone_indices: [ushort];
   bone_weights: [ushort];
   tangents: [float];
+  materials: [string] (required);
 }
 
 enum LightType : ubyte { Point, Spot, Rect, Directional, Sky }

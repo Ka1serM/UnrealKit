@@ -25,6 +25,7 @@ OBJECT_PROPERTIES = ("location", "rotation", "scale", "visibility", "field_of_vi
 BONES = "bones/"
 BONE_ATTRIBUTES = ("location", "rotation", "scale")
 MATERIALS = "materials/"
+MESH_MATERIALS = "unrealkit.materials"
 MAX_SKINNED_UV_SETS = 4
 VIEWER = "unrealkit.viewer"
 VIEWER_VISIBILITY = "unrealkit.viewer_visibility"
@@ -297,6 +298,8 @@ class SceneBuilder:
         mesh.color_attributes.new("COL0", "FLOAT_COLOR", "POINT").data.foreach_set("color", colors)
         for _ in range(record.MaterialSlotsLength()):
             mesh.materials.append(None)
+        #! A slot shows the material of the mesh on the mesh data, and an object links only the slots its component overrides.
+        mesh[MESH_MATERIALS] = [text(record.Materials(index)) for index in range(record.MaterialsLength())]
         mesh.update()
         mesh.shade_smooth()
         normals = space.directions(record.NormalsAsNumpy())
@@ -554,9 +557,15 @@ class SceneBuilder:
             slots = self.instancer(obj, data, material_keys)
         else:
             slots = shaded.material_slots
-            for slot, material_key in zip(slots, material_keys):
-                slot.link = "OBJECT"
-                slot.material = self.built_material(material_key)
+            own = list(shaded.data.get(MESH_MATERIALS, ()))
+            for index, (slot, material_key) in enumerate(zip(slots, material_keys)):
+                material = self.built_material(material_key)
+                if material is not None and index < len(own) and own[index] == material_key:
+                    shaded.data.materials[index] = material
+                    slot.link = "DATA"
+                else:
+                    slot.link = "OBJECT"
+                    slot.material = material
             if kind == fb.ObjectKind.Mesh:
                 self.mesh_objects.append(shaded)
         for target in (obj,) if mesh_object is None else (obj, mesh_object):
@@ -663,6 +672,7 @@ class SceneBuilder:
             if slot >= len(slots) or slots[slot].material is None:
                 raise ValueError(f"the track {track_name} animates the material of slot {slot}, which {owner} does not have")
             material = slots[slot].material.copy()
+            slots[slot].link = "OBJECT"
             if KEY in material:
                 del material[KEY]
             slots[slot].material = material

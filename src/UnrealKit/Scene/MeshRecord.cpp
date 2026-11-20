@@ -132,10 +132,15 @@ Frame encodeMesh(const std::string_view key, const std::string_view name, const 
     const auto triangleMaterials =
         filledVector<std::uint16_t>(builder, indices.size() / 3, [&](std::uint16_t* target) { fillTriangleMaterials(mesh, target); });
     std::vector<flatbuffers::Offset<flatbuffers::String>> slots;
+    std::vector<flatbuffers::Offset<flatbuffers::String>> materials;
     slots.reserve(mesh.getMaterials().size());
-    for (const MeshMaterial& material : mesh.getMaterials())
+    materials.reserve(mesh.getMaterials().size());
+    for (const MeshMaterial& material : mesh.getMaterials()) {
         slots.push_back(builder.CreateString(material.slotName));
+        materials.push_back(builder.CreateString(material.materialPath));
+    }
     const auto slotVector = builder.CreateVector(slots);
+    const auto materialVector = builder.CreateVector(materials);
     const bool skinned = influences.count > 0;
     const auto skeletonText = skinned ? builder.CreateString(skeleton) : 0;
     const auto boneVector = skinned ? builder.CreateVector(influences.bones) : 0;
@@ -145,7 +150,7 @@ Frame encodeMesh(const std::string_view key, const std::string_view name, const 
     return finish(builder, scene::stream::Record::Mesh,
                   scene::stream::CreateMesh(builder, keyText, nameText, positions, normals, static_cast<std::uint8_t>(channelCount), uvs, colors, corners,
                                             triangleMaterials, slotVector, skeletonText, static_cast<std::uint8_t>(influences.count), boneVector, weightVector,
-                                            tangents));
+                                            tangents, materialVector));
 }
 
 }
@@ -267,11 +272,12 @@ Frame quad(const std::string_view key, const std::string_view name) {
     const auto materialVector = builder.CreateVector(triangleMaterials.data(), triangleMaterials.size());
     const auto slotVector = builder.CreateVector(std::vector{builder.CreateString("Quad")});
     const auto tangentVector = builder.CreateVector(tangents.data(), tangents.size());
+    const auto meshMaterialVector = builder.CreateVector(std::vector{builder.CreateString("")});
     const auto keyText = builder.CreateString(key);
     const auto nameText = builder.CreateString(name);
     return finish(builder, scene::stream::Record::Mesh,
                   scene::stream::CreateMesh(builder, keyText, nameText, positionVector, normalVector, 1, uvVector, colorVector, indexVector, materialVector,
-                                            slotVector, 0, 0, 0, 0, tangentVector));
+                                            slotVector, 0, 0, 0, 0, tangentVector, meshMaterialVector));
 }
 
 }
