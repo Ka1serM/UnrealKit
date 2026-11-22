@@ -21,7 +21,8 @@ LIGHT_TYPES = {fb.LightType.Point: "POINT", fb.LightType.Spot: "SPOT", fb.LightT
                fb.LightType.Directional: "SUN"}
 HIDDEN_PATHS = ("hide_viewport", "hide_render")
 LIGHT_RAY_PATHS = ("visible_shadow", "visible_diffuse", "visible_glossy", "visible_transmission", "visible_volume_scatter")
-OBJECT_PROPERTIES = ("location", "rotation", "scale", "visibility", "field_of_view")
+OBJECT_PROPERTIES = ("location", "rotation", "scale", "visibility", "field_of_view", "first_person_field_of_view")
+FIRST_PERSON_FIELD_OF_VIEW = "unrealkit.first_person_field_of_view"
 BONES = "bones/"
 BONE_ATTRIBUTES = ("location", "rotation", "scale")
 MATERIALS = "materials/"
@@ -659,9 +660,19 @@ class SceneBuilder:
         self.assign(action, obj, track_name, curves + visibility, track.loop)
         if mesh_object is not None and visibility:
             self.assign(action, mesh_object, f"{track_name} mesh", visibility, track.loop)
+        camera_curves = []
         if (field_of_view := track.get("field_of_view")) is not None:
             frames, values = field_of_view
-            self.assign(action, obj.data, track_name, [("lens", 0, frames, space.camera_lens(values[:, 0]), LINEAR)], track.loop)
+            camera_curves.append(("lens", 0, frames, space.camera_lens(values[:, 0]), LINEAR))
+        if (first_person := track.get("first_person_field_of_view")) is not None:
+            frames, values = first_person
+            angles = np.radians(values[:, 0])
+            obj.data[FIRST_PERSON_FIELD_OF_VIEW] = float(angles[0])
+            obj.data.id_properties_ui(FIRST_PERSON_FIELD_OF_VIEW).update(subtype="ANGLE",
+                                                                         description="The field of view of the first-person primitives")
+            camera_curves.append((f'["{FIRST_PERSON_FIELD_OF_VIEW}"]', 0, frames, angles, LINEAR))
+        if camera_curves:
+            self.assign(action, obj.data, track_name, camera_curves, track.loop)
         self.animate_materials(action, slots, (mesh_object or obj).name, track, track_name)
 
     def animate_materials(self, action, slots, owner, track, track_name):
