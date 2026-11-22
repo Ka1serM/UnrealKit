@@ -108,6 +108,7 @@ inline constexpr std::string_view rotation = "rotation";
 inline constexpr std::string_view scale = "scale";
 inline constexpr std::string_view visibility = "visibility";
 inline constexpr std::string_view fieldOfView = "field_of_view";
+inline constexpr std::string_view firstPersonFieldOfView = "first_person_field_of_view";
 std::string bone(std::string_view bone, std::string_view attribute);
 std::string materialParameter(std::size_t slot, std::string_view parameter);
 }
