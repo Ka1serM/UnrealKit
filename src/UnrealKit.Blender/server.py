@@ -138,6 +138,7 @@ class Server(threading.Thread):
         self.stopping = threading.Event()
         self.listener = None
         self.error = None
+        self.serving = []
 
     def stop(self):
         self.stopping.set()
@@ -145,6 +146,8 @@ class Server(threading.Thread):
             self.listener.close()
         if self.is_alive() and threading.current_thread() is not self:
             self.join(timeout=2.0)
+        for thread in self.serving:
+            thread.join()
 
     def run(self):
         try:
@@ -162,7 +165,9 @@ class Server(threading.Thread):
                         continue
                     except OSError:
                         break
-                    threading.Thread(target=self._serve, args=(client,), daemon=True).start()
+                    thread = threading.Thread(target=self._serve, args=(client,), daemon=True)
+                    thread.start()
+                    self.serving = [serving for serving in self.serving if serving.is_alive()] + [thread]
         except OSError as error:
             self.error = str(error)
             print(f"[{NAME}] Cannot listen on {HOST}:{PORT}: {error}")
@@ -192,10 +197,10 @@ class Server(threading.Thread):
                 connection = Connection()
                 self.connections.put(connection)
                 _send_frame(sock, self.hello())
-                while not self.stopping.is_set():
-                    done = connection.done.is_set()
+                while True:
+                    ending = connection.done.is_set() or self.stopping.is_set()
                     self._send_replies(sock, connection)
-                    if done:
+                    if ending:
                         _close(sock)
                         break
                     if not select.select([sock], [], [], 0.02)[0]:
