@@ -341,6 +341,15 @@ std::optional<std::array<ExprId, 3>> sceneColorShare(MaterialEvaluator& evaluato
     return share;
 }
 
+ExprId maskedOpacity(ExpressionGraph& graph, LightSeparation& separation, const ShaderOutputs& basePass) {
+    const ExprId kept = graph.select(separation.darkened(basePass.discard), graph.constant(0.0f), graph.constant(1.0f));
+    const ExprId alpha = separation.withoutLight(basePass.targets[0][3]);
+    //! A masked mobile base pass that clips writes zero alpha; one that keeps its mask in alpha writes the mask there and never clips.
+    if (graph.isConstant(alpha, 0.0f))
+        return kept;
+    return graph.mul(kept, graph.clamp(alpha, graph.constant(0.0f), graph.constant(1.0f)));
+}
+
 SurfaceAttributes debugViewAttributes(MaterialEvaluator& evaluator, const CompiledShader& basePass, const CompiledShader& vertexShader,
                                       const CompiledShader& debugView, const BlendMode blendMode) {
     ExpressionGraph& graph = evaluator.getGraph();
@@ -401,7 +410,7 @@ SurfaceAttributes debugViewAttributes(MaterialEvaluator& evaluator, const Compil
     for (uint32_t c = 0; c < 3; ++c)
         surface.emission[c] = separation.darkened(color[c]);
     if (blendMode == BlendMode::Masked)
-        surface.opacity = graph.select(separation.darkened(basePassOutputs.discard), graph.constant(0.0f), graph.constant(1.0f));
+        surface.opacity = maskedOpacity(graph, separation, basePassOutputs);
     const std::optional<std::array<ExprId, 3>> refraction =
         blendMode == BlendMode::Translucent ? sceneColorShare(evaluator, basePass, lights, separation, surface.emission) : std::nullopt;
     applyLightResponse(evaluator, basePass, lights, separation, surface);
